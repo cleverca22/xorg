@@ -6,7 +6,8 @@ def poke(key):
 	xorg.sendKey(1,key); # press
 	xorg.sendKey(0,key); # release
 xorg.init();
-xorg.setTarget("Event");
+#xorg.setTarget("Event");
+xorg.targetFocus();
 poke('a');
 poke('space');
 poke('b');

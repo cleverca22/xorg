@@ -4,7 +4,7 @@
 
 Display *display;
 Window window;
-Window *targetWindow;
+Window targetWindow;
 
 static PyObject *xorg_init(PyObject *self, PyObject *args) {
 	//const char *disp;
@@ -14,10 +14,9 @@ static PyObject *xorg_init(PyObject *self, PyObject *args) {
 	if (display == NULL) return NULL; // FIXME, add exception
 	window = XDefaultRootWindow(display);
 	if (!window) return NULL; // FIXME
-	targetWindow = NULL;
 	return Py_BuildValue("i", 0);
 }
-Window *find_window(Display *display, Window parentWindow, const char *findme) {
+Window find_window(Display *display, Window parentWindow, const char *findme) {
 	int i;
 	Window root;
 	Window parent;
@@ -26,12 +25,14 @@ Window *find_window(Display *display, Window parentWindow, const char *findme) {
 	XQueryTree(display,parentWindow,&root,&parent,&children,&childrenCount);
 	
 	char *window_name = 0;
-	Window *window = 0;
+	Window window = 0;
 	for (i=0; i<childrenCount; i++) {
 		if (XFetchName(display,children[i],&window_name) == 1) {
 			if (strcasestr(window_name,findme) != NULL) {
 				XFree(window_name);
-				return &children[i];
+				window = children[i];
+				XFree(children);
+				return window;
 			}
 			XFree(window_name);
 		}
@@ -53,6 +54,11 @@ static PyObject *xorg_setTarget(PyObject *self, PyObject *args) {
 		printf("error\n");
 		return NULL; // FIXME
 	}
+	return Py_BuildValue("i",0);
+}
+static PyObject *xorg_targetFocus(PyObject *self, PyObject *args) {
+	int foo;
+	XGetInputFocus(display,&targetWindow,&foo);
 	return Py_BuildValue("i",0);
 }
 XKeyEvent create_key_event(Display *display, Window window, Window root, int press, int keycode, int modifiers) {
@@ -92,7 +98,7 @@ static PyObject *xorg_sendKey(PyObject *self,PyObject *args) {
 		printf("keycode '%s' not found\n",keystring);
 		return NULL; // FIXME
 	}
-	event = create_key_event(display,*targetWindow,window,down,keycode,0);
+	event = create_key_event(display,targetWindow,window,down,keycode,0);
 	if (down == 1) {
 		XSendEvent(event.display,event.window,True,KeyPressMask,(XEvent*)&event);
 	} else {
@@ -105,6 +111,7 @@ static PyMethodDef XorgMethods[] = {
 	{"init",xorg_init,METH_VARARGS,"opens the xorg display"},
 	{"setTarget",xorg_setTarget,METH_VARARGS,"sets target window"},
 	{"sendKey",xorg_sendKey,METH_VARARGS,"send a key"},
+	{"targetFocus",xorg_targetFocus,METH_VARARGS,"targets whatever window is currently up"},
 	{NULL,NULL,0,NULL}
 };
 PyMODINIT_FUNC initxorg() {
