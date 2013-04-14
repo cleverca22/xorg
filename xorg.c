@@ -109,7 +109,4 @@ static PyMethodDef XorgMethods[] = {
 };
 PyMODINIT_FUNC initxorg() {
 	(void) Py_InitModule("xorg", XorgMethods);
-	#ifdef XK_KATAKANA
-	printf("kana support found\n");
-	#endif
 }
