@@ -1,1 +1,1 @@
-just run python setup.py build to compile, then put xorg.so somewhere its looking (current dir for ex)
+just run 'sudo apt-get install python-dev;python setup.py build' to compile, then put xorg.so somewhere its looking (current dir for ex)
